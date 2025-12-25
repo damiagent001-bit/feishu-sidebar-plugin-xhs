@@ -1,0 +1,173 @@
+@import 'reset-css';
+
+/* 全局样式 - 符合飞书设计规范 */
+* {
+  box-sizing: border-box;
+}
+
+/* 样式主题 CSS 变量（默认抖音风格） */
+:root {
+  /* 主背景色 */
+  --style-bg-primary: #121212;
+  --style-bg-content: #1E1E1E;
+  
+  /* 强调色 */
+  --style-color-accent: #FF66CC;
+  --style-color-secondary: #00FFFF;
+  --style-color-assistant: #00FFFF;
+  --style-color-highlight: #FF66CC;
+  
+  /* 文本色 */
+  --style-text-primary: #FFFFFF;
+  --style-text-secondary: #CCCCCC;
+  --style-text-placeholder: #888888;
+  
+  /* 边框和分割线 */
+  --style-border: #333333;
+  
+  /* 渐变 */
+  --style-gradient-main: linear-gradient(135deg, #FF66CC 0%, #00FFFF 100%);
+  
+  /* 卡片阴影 */
+  --style-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  
+  /* 交互效果 */
+  --style-hover-bg: rgba(255, 102, 204, 0.1);
+  --style-active-bg: rgba(255, 102, 204, 0.2);
+}
+
+body {
+  /* 飞书推荐字体 - 中英文环境 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Tahoma, 'PingFang SC', 'Microsoft Yahei', Arial, 'Hiragino Sans GB', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--el-text-color-primary);
+  background-color: var(--el-bg-color-page);
+}
+
+/* 日文环境字体 */
+:lang(ja) body {
+  font-family: 'ヒラギノ角ゴ Pro W3', 'Hiragino Kaku Gothic Pro', 'Yu Gothic UI', '游ゴシック体', 'Noto Sans Japanese', 'Microsoft Jhenghei UI', 'Microsoft Yahei UI', 'ＭＳ Ｐゴシック', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* 滚动条样式 - 简洁 */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--el-border-color);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--el-border-color-darker);
+}
+
+/* Element Plus 弹出层样式（使用样式主题变量） */
+.el-select-dropdown,
+.el-popper {
+  background-color: var(--style-bg-content) !important;
+  border: 1px solid var(--style-border) !important;
+  box-shadow: var(--style-card-shadow) !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  border-radius: 8px; /* 小红书风格：下拉菜单圆角 */
+}
+
+.el-select-dropdown__item {
+  color: var(--style-text-primary) !important;
+  background-color: transparent !important;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* 确保所有状态下的文字都可见 */
+.el-select-dropdown__item,
+.el-select-dropdown__item:not(.selected):not(.is-disabled) {
+  color: var(--style-text-primary) !important;
+}
+
+.el-select-dropdown__item:hover {
+  background-color: var(--style-hover-bg) !important;
+  color: var(--style-text-primary) !important;
+}
+
+.el-select-dropdown__item.selected {
+  color: var(--style-color-accent) !important;
+  background-color: var(--style-hover-bg) !important;
+  font-weight: 500;
+}
+
+.el-select-dropdown__item.selected:hover {
+  color: var(--style-color-accent) !important;
+  background-color: var(--style-hover-bg) !important;
+}
+
+.el-select-dropdown__item.is-disabled {
+  color: var(--style-text-secondary) !important;
+  opacity: 0.5;
+}
+
+/* 抖音主题特殊处理：确保下拉菜单文字在深色背景下清晰可见 */
+body[data-theme="douyin"] .el-select-dropdown__item,
+[data-theme="douyin"] .el-select-dropdown__item,
+:root[data-theme="douyin"] .el-select-dropdown__item {
+  color: #FFFFFF !important;
+  background-color: transparent !important;
+}
+
+body[data-theme="douyin"] .el-select-dropdown__item.selected,
+[data-theme="douyin"] .el-select-dropdown__item.selected,
+:root[data-theme="douyin"] .el-select-dropdown__item.selected {
+  color: #FF66CC !important;
+  background-color: rgba(255, 102, 204, 0.1) !important;
+}
+
+body[data-theme="douyin"] .el-select-dropdown__item:hover,
+[data-theme="douyin"] .el-select-dropdown__item:hover,
+:root[data-theme="douyin"] .el-select-dropdown__item:hover {
+  color: #FFFFFF !important;
+  background-color: rgba(255, 102, 204, 0.15) !important;
+}
+
+/* 确保下拉菜单背景在抖音主题下正确 */
+body[data-theme="douyin"] .el-select-dropdown,
+[data-theme="douyin"] .el-select-dropdown,
+:root[data-theme="douyin"] .el-select-dropdown {
+  background-color: #1E1E1E !important;
+  border-color: #333333 !important;
+}
+
+/* Element Plus 全局文本颜色覆盖（抖音风格） */
+.el-message {
+  background-color: var(--style-bg-content) !important;
+  border-color: var(--style-border) !important;
+}
+
+.el-message__content {
+  color: var(--style-text-primary) !important;
+}
+
+/* 确保所有文本元素在深色背景下可见 */
+[data-theme="douyin"] *,
+body[data-theme="douyin"] * {
+  color: var(--style-text-primary);
+}
+
+/* Element Plus 工具提示 */
+.el-tooltip__popper {
+  background-color: var(--style-bg-content) !important;
+  border-color: var(--style-border) !important;
+  color: var(--style-text-primary) !important;
+}
+
+.el-tooltip__popper .el-tooltip__arrow::before {
+  background-color: var(--style-bg-content) !important;
+  border-color: var(--style-border) !important;
+}
