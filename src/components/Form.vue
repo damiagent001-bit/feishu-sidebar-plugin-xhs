@@ -32,12 +32,52 @@ const showToast = (message) => {
   getServiceCodeByPlatform,
   EXTERNAL_LINKS,
 } from '../config.js';
-import { getCookie, setCookie } from '../utils/cookie.js';
 
 const { t } = useI18n();
 
-// Cookie Key 常量
-const API_KEY_COOKIE_NAME = 'feishu_plugin_api_key';
+// localStorage Key 常量
+const API_KEY_STORAGE_NAME = 'feishu_plugin_api_key';
+const REMEMBER_API_KEY_STORAGE_NAME = 'feishu_plugin_remember_api_key';
+
+// 保存 API Key 到 localStorage
+const saveApiKeyToStorage = (value) => {
+  try {
+    if (value && value.trim()) {
+      localStorage.setItem(API_KEY_STORAGE_NAME, value.trim());
+      localStorage.setItem(REMEMBER_API_KEY_STORAGE_NAME, 'true');
+    } else {
+      localStorage.removeItem(API_KEY_STORAGE_NAME);
+      localStorage.removeItem(REMEMBER_API_KEY_STORAGE_NAME);
+    }
+  } catch (e) {
+    console.error('Failed to save API Key to localStorage:', e);
+  }
+};
+
+// 从 localStorage 读取 API Key
+const loadApiKeyFromStorage = () => {
+  try {
+    const savedApiKey = localStorage.getItem(API_KEY_STORAGE_NAME);
+    const rememberStatus = localStorage.getItem(REMEMBER_API_KEY_STORAGE_NAME);
+    if (savedApiKey && rememberStatus === 'true') {
+      return savedApiKey;
+    }
+    return null;
+  } catch (e) {
+    console.error('Failed to load API Key from localStorage:', e);
+    return null;
+  }
+};
+
+// 删除 localStorage 中的 API Key
+const removeApiKeyFromStorage = () => {
+  try {
+    localStorage.removeItem(API_KEY_STORAGE_NAME);
+    localStorage.removeItem(REMEMBER_API_KEY_STORAGE_NAME);
+  } catch (e) {
+    console.error('Failed to remove API Key from localStorage:', e);
+  }
+};
 
 // 套餐页面显示状态
 const showMembershipPlan = ref(false);
@@ -49,6 +89,9 @@ const activeTab = ref('0');
 
 // API Key
 const apiKey = ref('');
+
+// 记住登录状态（localStorage）
+const rememberApiKey = ref(false);
 
 // 表格选择
 const tableOption = ref('create'); // 'create' 或 'existing'
@@ -814,13 +857,23 @@ watch(() => activeTab.value, () => {
   }
 });
 
-// 监听 API Key 变化，自动保存到 Cookie
+// 监听 API Key 变化，如果勾选了"记住登录状态"，则保存到 localStorage
 watch(apiKey, (newValue) => {
-  if (newValue && newValue.trim()) {
-    setCookie(API_KEY_COOKIE_NAME, newValue.trim(), 30);
+  if (rememberApiKey.value) {
+    saveApiKeyToStorage(newValue);
+  }
+});
+
+// 监听"记住登录状态"勾选框变化
+watch(rememberApiKey, (isChecked) => {
+  if (isChecked) {
+    // 勾选时，保存当前 API Key 到 localStorage
+    if (apiKey.value && apiKey.value.trim()) {
+      saveApiKeyToStorage(apiKey.value);
+    }
   } else {
-    // 如果清空，也删除 cookie
-    setCookie(API_KEY_COOKIE_NAME, '', -1);
+    // 取消勾选时，删除 localStorage 中的 API Key
+    removeApiKeyFromStorage();
   }
 });
 
@@ -883,10 +936,12 @@ const formatDate = (dateStr) => {
 };
 
 onMounted(async () => {
-  // 从 Cookie 读取 API Key
-  const savedApiKey = getCookie(API_KEY_COOKIE_NAME);
+  // 从 localStorage 读取 API Key
+  const savedApiKey = loadApiKeyFromStorage();
   if (savedApiKey) {
     apiKey.value = savedApiKey;
+    // 如果从 localStorage 读取到了 API Key，自动勾选"记住登录状态"
+    rememberApiKey.value = true;
   }
   
   // 获取用户信息（如果用户不存在则自动创建）
@@ -986,6 +1041,11 @@ onMounted(async () => {
           >
             获取api_key
           </el-button>
+        </div>
+        <div class="form-item" style="margin-top: 8px; margin-bottom: 0;">
+          <el-checkbox v-model="rememberApiKey" style="margin-left: 0;">
+            记住我的api key
+          </el-checkbox>
         </div>
       </div>
 
