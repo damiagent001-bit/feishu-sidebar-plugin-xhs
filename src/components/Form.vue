@@ -1028,6 +1028,7 @@ onMounted(async () => {
           <div style="flex: 1;">
             <el-input
               v-model="apiKey"
+              type="password"
               placeholder="请输入 API Key"
               clearable
               style="width: 100%"
