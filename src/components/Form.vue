@@ -378,22 +378,58 @@ const getOrCreateFields = async (table, fieldKeys, platform) => {
     const primaryKey = platform === 'xiaohongshu' ? 'note_title' : 'item_id';
     const primaryKeyLabel = platform === 'xiaohongshu' ? '笔记标题' : '作品ID';
     
+    // 先检查是否已经存在同名的字段（用于判断是否可以重命名）
+    let hasPrimaryKeyField = false;
+    let existingPrimaryKeyFieldId = null;
+    
+    for (const field of fieldList) {
+      if (field.name === primaryKeyLabel) {
+        hasPrimaryKeyField = true;
+        existingPrimaryKeyFieldId = field.id;
+        break;
+      }
+    }
+    
     if (fieldKeys.includes(primaryKey)) {
       if (defaultField) {
-        // 如果第一列的名称不是期望的名称，修改它
-        if (defaultField.name !== primaryKeyLabel) {
-          await table.setField(defaultField.id, { name: primaryKeyLabel });
-          console.log(`Renamed default field to "${primaryKeyLabel}":`, defaultField.id);
+        // 如果第一列已经是期望的名称，直接使用
+        if (defaultField.name === primaryKeyLabel) {
+          fieldMap[primaryKey] = defaultField.id;
+          console.log(`Using default field for ${primaryKey} (already named "${primaryKeyLabel}"):`, defaultField.id);
+        } 
+        // 如果第一列不是期望的名称，但已经存在同名字段，使用已存在的字段
+        else if (hasPrimaryKeyField && existingPrimaryKeyFieldId !== defaultField.id) {
+          fieldMap[primaryKey] = existingPrimaryKeyFieldId;
+          console.log(`Using existing field "${primaryKeyLabel}" for ${primaryKey}:`, existingPrimaryKeyFieldId);
         }
-        fieldMap[primaryKey] = defaultField.id;
-        console.log(`Using default field for ${primaryKey}:`, defaultField.id);
+        // 如果第一列不是期望的名称，且不存在同名字段，尝试重命名第一列
+        else if (!hasPrimaryKeyField) {
+          try {
+            await table.setField(defaultField.id, { name: primaryKeyLabel });
+            console.log(`Renamed default field to "${primaryKeyLabel}":`, defaultField.id);
+            fieldMap[primaryKey] = defaultField.id;
+          } catch (e) {
+            console.warn(`Failed to rename default field to "${primaryKeyLabel}":`, e);
+            // 如果重命名失败，仍然使用第一列（即使名称不匹配）
+            fieldMap[primaryKey] = defaultField.id;
+            console.log(`Using default field for ${primaryKey} (rename failed, using as-is):`, defaultField.id);
+          }
+        }
+        // 如果第一列不是期望的名称，且已存在的同名字段就是第一列本身（理论上不应该发生）
+        else {
+          fieldMap[primaryKey] = defaultField.id;
+          console.log(`Using default field for ${primaryKey}:`, defaultField.id);
+        }
       }
     }
     
     // 匹配其他已存在的字段
     for (const field of fieldList) {
-      // 跳过第一列（已经用于主键）
-      if (field.id === defaultField?.id) continue;
+      // 跳过第一列（已经用于主键，除非主键使用了其他字段）
+      if (field.id === defaultField?.id && fieldMap[primaryKey] === defaultField.id) continue;
+      
+      // 跳过已经用于主键的字段
+      if (fieldMap[primaryKey] && field.id === fieldMap[primaryKey]) continue;
       
       // 通过字段名匹配
       const fieldOption = fieldOptions.find(f => f.label === field.name);
@@ -402,12 +438,18 @@ const getOrCreateFields = async (table, fieldKeys, platform) => {
       }
     }
     
-    // 创建缺失的字段（排除主键，因为它已经使用第一列）
+    // 创建缺失的字段（排除主键，因为它已经使用第一列或已存在的字段）
     const fieldsToCreate = fieldKeys.filter(key => key !== primaryKey);
     
     for (const fieldKey of fieldsToCreate) {
+      // 如果已经映射到已存在的字段，跳过
       if (existingFieldMap[fieldKey]) {
         fieldMap[fieldKey] = existingFieldMap[fieldKey];
+        continue;
+      }
+      
+      // 如果主键已经使用了这个字段（理论上不应该发生，但为了安全）
+      if (fieldMap[primaryKey] && existingFieldMap[fieldKey] === fieldMap[primaryKey]) {
         continue;
       }
       
@@ -416,6 +458,22 @@ const getOrCreateFields = async (table, fieldKeys, platform) => {
       
       let fieldType;
       const fieldName = fieldOption.label;
+      
+      // 再次检查是否已存在同名字段（防止在匹配时遗漏）
+      let duplicateField = null;
+      for (const field of fieldList) {
+        if (field.name === fieldName) {
+          duplicateField = field;
+          break;
+        }
+      }
+      
+      // 如果发现重复字段，使用已存在的字段
+      if (duplicateField) {
+        fieldMap[fieldKey] = duplicateField.id;
+        console.log(`Found duplicate field "${fieldName}", using existing field:`, duplicateField.id);
+        continue;
+      }
       
       if (fieldKey === 'blogger_id' || fieldKey === 'link') {
         fieldType = 1; // 文本
@@ -431,13 +489,28 @@ const getOrCreateFields = async (table, fieldKeys, platform) => {
         fieldType = 1; // 默认文本
       }
       
-      const fieldId = await table.addField({
-        type: fieldType,
-        name: fieldName,
-      });
-      
-      // addField 直接返回字段 ID 字符串
-      fieldMap[fieldKey] = fieldId;
+      try {
+        const fieldId = await table.addField({
+          type: fieldType,
+          name: fieldName,
+        });
+        
+        // addField 直接返回字段 ID 字符串
+        fieldMap[fieldKey] = fieldId;
+        console.log(`Created new field "${fieldName}" (${fieldKey}):`, fieldId);
+      } catch (e) {
+        console.warn(`Failed to create field "${fieldName}":`, e);
+        // 如果创建失败（可能是名称重复），尝试再次查找已存在的字段
+        if (e.message && e.message.includes('repeated')) {
+          for (const field of fieldList) {
+            if (field.name === fieldName) {
+              fieldMap[fieldKey] = field.id;
+              console.log(`Field "${fieldName}" already exists, using existing field:`, field.id);
+              break;
+            }
+          }
+        }
+      }
     }
     
     return fieldMap;
@@ -558,11 +631,21 @@ const writeDataToTable = async (videos, fieldKeys, platform = 'douyin') => {
         } else {
           // 文本字段（包括主键字段）
           if (value !== null && value !== undefined && value !== '') {
-            const stringValue = String(value);
-            fields[fieldId] = stringValue;
-            if (fieldKey === primaryKey) {
-              hasPrimaryKey = true;
-              console.log(`记录 ${i + 1}: Set ${primaryKey} field: fieldId=${fieldId}, value=${stringValue}`);
+            let stringValue;
+            if (Array.isArray(value)) {
+              // 过滤掉无效值并使用换行符连接
+              const validValues = value.filter(v => v !== null && v !== undefined && v !== '');
+              stringValue = validValues.join('\n');
+            } else {
+              stringValue = String(value);
+            }
+            
+            if (stringValue) {
+              fields[fieldId] = stringValue;
+              if (fieldKey === primaryKey) {
+                hasPrimaryKey = true;
+                console.log(`记录 ${i + 1}: Set ${primaryKey} field: fieldId=${fieldId}, value=${stringValue}`);
+              }
             }
           }
         }
