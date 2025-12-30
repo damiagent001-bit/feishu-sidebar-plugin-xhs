@@ -140,7 +140,6 @@ export const FIELD_OPTIONS_XIAOHONGSHU = [
   { key: 'video_duration', label: '视频时长', required: false },
   { key: 'music_title', label: '音乐标题', required: false },
   { key: 'music_author', label: '音乐作者', required: false },
-  { key: 'author_uid', label: '作者UID', required: false },
   { key: 'author_signature', label: '作者签名', required: false },
   { key: 'narration_audio_url', label: '视频解说音频', required: false },
 ];

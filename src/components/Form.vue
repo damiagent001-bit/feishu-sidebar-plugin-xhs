@@ -335,7 +335,9 @@ const createTable = async (fieldKeys, platform = 'douyin') => {
         fieldType = 5; // 日期时间
       } else if (fieldKey.includes('count') || fieldKey === 'likes_count' || fieldKey === 'comments_count' || 
                  fieldKey === 'shares_count' || fieldKey === 'favorites_count' || fieldKey === 'danmaku_count' ||
-                 fieldKey === 'new_likes_count' || fieldKey === 'new_comments_count') {
+                 fieldKey === 'new_likes_count' || fieldKey === 'new_comments_count' ||
+                 fieldKey === 'digg_count' || fieldKey === 'collect_count' || fieldKey === 'share_count' ||
+                 fieldKey === 'comment_count' || fieldKey === 'follower_count') {
         fieldType = 2; // 数字
       } else if (fieldKey === 'cover_image') {
         fieldType = 17; // 附件
@@ -348,6 +350,18 @@ const createTable = async (fieldKeys, platform = 'douyin') => {
         name: fieldName,
       });
       
+      // 如果是数字字段，设置为整数格式
+      if (fieldType === 2) {
+        try {
+          const field = await table.getFieldById(fieldId);
+          // 设置格式为整数（'0'）
+          await field.setFormatter('0');
+          console.log(`Set formatter to integer for field ${fieldName}`);
+        } catch (e) {
+          console.warn(`Failed to set formatter for field ${fieldName}:`, e);
+        }
+      }
+
       // addField 直接返回字段 ID 字符串
       fieldMap[fieldKey] = fieldId;
       console.log(`Created field ${fieldName} (${fieldKey}):`, fieldId);
@@ -481,7 +495,9 @@ const getOrCreateFields = async (table, fieldKeys, platform) => {
         fieldType = 5; // 日期时间
       } else if (fieldKey.includes('count') || fieldKey === 'likes_count' || fieldKey === 'comments_count' || 
                  fieldKey === 'shares_count' || fieldKey === 'favorites_count' || fieldKey === 'danmaku_count' ||
-                 fieldKey === 'new_likes_count' || fieldKey === 'new_comments_count') {
+                 fieldKey === 'new_likes_count' || fieldKey === 'new_comments_count' ||
+                 fieldKey === 'digg_count' || fieldKey === 'collect_count' || fieldKey === 'share_count' ||
+                 fieldKey === 'comment_count' || fieldKey === 'follower_count') {
         fieldType = 2; // 数字
       } else if (fieldKey === 'cover_image') {
         fieldType = 17; // 附件
@@ -495,6 +511,18 @@ const getOrCreateFields = async (table, fieldKeys, platform) => {
           name: fieldName,
         });
         
+        // 如果是数字字段，设置为整数格式
+        if (fieldType === 2) {
+          try {
+            const field = await table.getFieldById(fieldId);
+            // 设置格式为整数（'0'）
+            await field.setFormatter('0');
+            console.log(`Set formatter to integer for field ${fieldName}`);
+          } catch (e) {
+            console.warn(`Failed to set formatter for field ${fieldName}:`, e);
+          }
+        }
+
         // addField 直接返回字段 ID 字符串
         fieldMap[fieldKey] = fieldId;
         console.log(`Created new field "${fieldName}" (${fieldKey}):`, fieldId);
@@ -620,12 +648,15 @@ const writeDataToTable = async (videos, fieldKeys, platform = 'douyin') => {
           }
         } else if (fieldKey.includes('count') || fieldKey === 'likes_count' || fieldKey === 'comments_count' || 
                    fieldKey === 'shares_count' || fieldKey === 'favorites_count' || fieldKey === 'danmaku_count' ||
-                   fieldKey === 'new_likes_count' || fieldKey === 'new_comments_count') {
-          // 数字字段
+                   fieldKey === 'new_likes_count' || fieldKey === 'new_comments_count' ||
+                   fieldKey === 'digg_count' || fieldKey === 'collect_count' || fieldKey === 'share_count' ||
+                   fieldKey === 'comment_count' || fieldKey === 'follower_count') {
+          // 数字字段（点赞数、收藏数、转发数、评论数、粉丝数等）- 转换为整数
           if (value !== null && value !== undefined && value !== '') {
             const numValue = Number(value);
             if (!isNaN(numValue)) {
-              fields[fieldId] = numValue;
+              // 转换为整数，去除小数点
+              fields[fieldId] = Math.floor(numValue);
             }
           }
         } else {
