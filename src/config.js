@@ -123,6 +123,8 @@ export const FIELD_OPTIONS_DOUYIN = [
 export const FIELD_OPTIONS_XIAOHONGSHU = [
   { key: 'note_title', label: '笔记标题', required: true },
   { key: 'note_content', label: '笔记正文', required: false },
+  { key: 'note_link', label: '笔记链接', required: false },
+  { key: 'note_images_list', label: '笔记图片列表', required: false },
   { key: 'item_id', label: '作品ID', required: false },
   { key: 'item_desc', label: '作品描述', required: false },
   { key: 'video_play_url', label: '视频播放URL', required: false },
