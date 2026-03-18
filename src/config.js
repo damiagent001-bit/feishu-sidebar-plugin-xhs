@@ -44,7 +44,7 @@ export const getServiceCodeByPlatform = (platform) => {
  * 平台选项（小红书专用版本，只保留小红书）
  */
 export const PLATFORM_OPTIONS = [
-  { label: '小红书', value: 'xiaohongshu' },
+  { label: '小红薯', value: 'xiaohongshu' },
 ];
 
 /**

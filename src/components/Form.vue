@@ -278,7 +278,7 @@ const createTable = async (fieldKeys, platform = 'douyin') => {
     const base = bitable.base;
     
     // 根据平台生成前缀
-    const platformPrefix = platform === 'xiaohongshu' ? '小红书' : '抖音';
+    const platformPrefix = platform === 'xiaohongshu' ? '小红薯' : '抖音';
     
     // 生成安全的表格名称：平台视频数据_MMDD_HHmmss（添加秒数避免重复）
     const now = new Date();
@@ -1107,7 +1107,7 @@ onMounted(async () => {
   <div v-else class="form-container">
     <!-- 顶部头部 -->
     <div class="header-section">
-      <div class="header-title">小红书博主关键词批量查询</div>
+      <div class="header-title">小红薯博主关键词批量查询</div>
     </div>
     
     <div class="content-wrapper">

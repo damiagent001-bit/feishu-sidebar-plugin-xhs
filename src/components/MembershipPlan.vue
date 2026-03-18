@@ -7,7 +7,7 @@
         <span class="back-text">返回</span>
       </div>
       <div class="header-center">
-        <div class="header-title">小红书博主关键词批量查询</div>
+        <div class="header-title">小红薯博主关键词批量查询</div>
         <div class="header-subtitle">套餐</div>
       </div>
     </div>
